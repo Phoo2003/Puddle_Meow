@@ -32,17 +32,17 @@ public class Main extends ApplicationAdapter {
 
         batch = new SpriteBatch();
 
-        playerTexture = new Texture("Glossy Green Slime Cat Sticker.png");
-        fishTexture = new Texture("cat.jpg");
+        playerTexture = new Texture("Cat.png");
+        fishTexture = new Texture("cat.png");
         background = new Texture("ground.jpg");
 
         font = new BitmapFont();
 
         player = new Rectangle();
-        player.x = 350;
-        player.y = 20;
         player.width = 70;
         player.height = 100;
+        player.x = Gdx.graphics.getWidth() / 2f - player.width / 2f;
+        player.y = 20;
 
         fishes = new Array<>();
 
@@ -54,11 +54,11 @@ public class Main extends ApplicationAdapter {
 
         Rectangle fish = new Rectangle();
 
-        fish.x = MathUtils.random(0, 700);
-        fish.y = 480;
-
         fish.width = 40;
         fish.height = 50;
+
+        fish.x = MathUtils.random(0, Gdx.graphics.getWidth() - fish.width);
+        fish.y = Gdx.graphics.getHeight();
 
         fishes.add(fish);
     }
@@ -67,6 +67,8 @@ public class Main extends ApplicationAdapter {
     public void render() {
 
         float delta = Gdx.graphics.getDeltaTime();
+        float screenWidth = Gdx.graphics.getWidth();
+        float screenHeight = Gdx.graphics.getHeight();
 
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
@@ -81,7 +83,7 @@ public class Main extends ApplicationAdapter {
 
         // Keep inside screen
         if (player.x < 0) player.x = 0;
-        if (player.x > 736) player.x = 736;
+        if (player.x > screenWidth - player.width) player.x = screenWidth - player.width;
 
         // Spawn fish every second
         spawnTimer += delta;
@@ -107,14 +109,14 @@ public class Main extends ApplicationAdapter {
             }
 
             // Remove if off screen
-            else if (fish.y < -32) {
+            else if (fish.y < -fish.height) {
                 fishes.removeIndex(i);
             }
         }
 
         batch.begin();
 
-        batch.draw(background, 0, 0, 800, 480);
+        batch.draw(background, 0, 0, screenWidth, screenHeight);
 
         // Draw player
         batch.draw(
@@ -137,7 +139,7 @@ public class Main extends ApplicationAdapter {
             );
         }
 
-        font.draw(batch, "Score: " + score, 20, 460);
+        font.draw(batch, "Score: " + score, 20, screenHeight - 20);
 
         batch.end();
     }
@@ -148,6 +150,7 @@ public class Main extends ApplicationAdapter {
         batch.dispose();
         playerTexture.dispose();
         fishTexture.dispose();
+        background.dispose();
         font.dispose();
     }
 }
