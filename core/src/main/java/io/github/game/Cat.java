@@ -55,22 +55,4 @@ public class Cat {
         sprite.setCenterX(centerX);
     }
 
-    public void becomeLiquid() {
-        liquidTimer = 5f;
-        setState(CatState.LIQUID);
-    }
-
-    public void takeDamage() {
-        if (state == CatState.SOLID) {
-            hp--;
-        }
-    }
-
-    public Rectangle getBounds() {
-        return sprite.getBoundingRectangle();
-    }
-
-    public void draw(SpriteBatch batch) {
-        sprite.draw(batch);
-    }
 }
