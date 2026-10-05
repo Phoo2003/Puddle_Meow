@@ -36,7 +36,7 @@ public class Main extends ApplicationAdapter {
         viewport = new FitViewport(800, 480);
 
         playerTexture = new Texture("cat.png");
-        fishTexture = new Texture("cat.png");
+        fishTexture = new Texture("Fish2.png");
         background = new Texture("ground.jpg");
 
         font = new BitmapFont();
