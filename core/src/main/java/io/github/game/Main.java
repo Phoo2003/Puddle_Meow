@@ -32,6 +32,8 @@ public class Main extends ApplicationAdapter {
     private int score;
     private int hp;
 
+    private boolean win;
+
     @Override
     public void create() {
 
@@ -46,7 +48,7 @@ public class Main extends ApplicationAdapter {
         font = new BitmapFont();
 
         player = new Rectangle();
-        player.width = 70;
+        player.width = 85;
         player.height = 100;
         player.x = viewport.getWorldWidth() / 2f - player.width / 2f;
         player.y = 20;
@@ -57,6 +59,8 @@ public class Main extends ApplicationAdapter {
         score = 0;
         hp = 3;
         spawnTimer = 0;
+
+        win = false;
     }
 
     @Override
@@ -69,7 +73,7 @@ public class Main extends ApplicationAdapter {
         Rectangle fish = new Rectangle();
 
         fish.width = 40;
-        fish.height = 50;
+        fish.height = 30;
 
         fish.x = MathUtils.random(0, viewport.getWorldWidth() - fish.width);
         fish.y = viewport.getWorldHeight();
@@ -81,8 +85,8 @@ public class Main extends ApplicationAdapter {
 
         Rectangle bone = new Rectangle();
 
-        bone.width = 40;
-        bone.height = 50;
+        bone.width = 30;
+        bone.height = 20;
 
         bone.x = MathUtils.random(0, viewport.getWorldWidth() - bone.width);
         bone.y = viewport.getWorldHeight();
@@ -213,7 +217,28 @@ public class Main extends ApplicationAdapter {
         font.draw(batch, "Score: " + score, 20, screenHeight - 20);
         font.draw(batch, "HP: " + hp, 20, screenHeight - 45);
 
+        if (win) {
+
+            font.draw(
+                batch,
+                "LEVEL COMPLETE!",
+                320,
+                240
+            );
+        }
+
+        if (hp <= 0) {
+
+            font.draw(
+                batch,
+                "GAME OVER",
+                350,
+                200
+            );
+        }
+
         batch.end();
+
     }
 
     @Override
