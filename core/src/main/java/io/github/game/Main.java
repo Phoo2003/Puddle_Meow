@@ -10,10 +10,12 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 
 public class Main extends ApplicationAdapter {
 
     private SpriteBatch batch;
+    private FitViewport viewport;
     private Texture playerTexture;
     private Texture fishTexture;
     private Texture background;
@@ -31,8 +33,9 @@ public class Main extends ApplicationAdapter {
     public void create() {
 
         batch = new SpriteBatch();
+        viewport = new FitViewport(800, 480);
 
-        playerTexture = new Texture("Cat.png");
+        playerTexture = new Texture("cat.png");
         fishTexture = new Texture("cat.png");
         background = new Texture("ground.jpg");
 
@@ -41,13 +44,18 @@ public class Main extends ApplicationAdapter {
         player = new Rectangle();
         player.width = 70;
         player.height = 100;
-        player.x = Gdx.graphics.getWidth() / 2f - player.width / 2f;
+        player.x = viewport.getWorldWidth() / 2f - player.width / 2f;
         player.y = 20;
 
         fishes = new Array<>();
 
         score = 0;
         spawnTimer = 0;
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        viewport.update(width, height, true);
     }
 
     private void spawnFish() {
@@ -57,8 +65,8 @@ public class Main extends ApplicationAdapter {
         fish.width = 40;
         fish.height = 50;
 
-        fish.x = MathUtils.random(0, Gdx.graphics.getWidth() - fish.width);
-        fish.y = Gdx.graphics.getHeight();
+        fish.x = MathUtils.random(0, viewport.getWorldWidth() - fish.width);
+        fish.y = viewport.getWorldHeight();
 
         fishes.add(fish);
     }
@@ -67,8 +75,8 @@ public class Main extends ApplicationAdapter {
     public void render() {
 
         float delta = Gdx.graphics.getDeltaTime();
-        float screenWidth = Gdx.graphics.getWidth();
-        float screenHeight = Gdx.graphics.getHeight();
+        float screenWidth = viewport.getWorldWidth();
+        float screenHeight = viewport.getWorldHeight();
 
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
@@ -114,6 +122,8 @@ public class Main extends ApplicationAdapter {
             }
         }
 
+        viewport.apply();
+        batch.setProjectionMatrix(viewport.getCamera().combined);
         batch.begin();
 
         batch.draw(background, 0, 0, screenWidth, screenHeight);
