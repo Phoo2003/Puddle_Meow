@@ -18,16 +18,19 @@ public class Main extends ApplicationAdapter {
     private FitViewport viewport;
     private Texture playerTexture;
     private Texture fishTexture;
+    private Texture boneTexture;
     private Texture background;
     private BitmapFont font;
 
     private Rectangle player;
 
     private Array<Rectangle> fishes;
+    private Array<Rectangle> bones;
 
     private float spawnTimer;
 
     private int score;
+    private int hp;
 
     @Override
     public void create() {
@@ -35,8 +38,9 @@ public class Main extends ApplicationAdapter {
         batch = new SpriteBatch();
         viewport = new FitViewport(800, 480);
 
-        playerTexture = new Texture("cat.png");
+        playerTexture = new Texture("Cat.png");
         fishTexture = new Texture("fish.png");
+        boneTexture = new Texture("fishbone.png");
         background = new Texture("ground.jpg");
 
         font = new BitmapFont();
@@ -48,8 +52,10 @@ public class Main extends ApplicationAdapter {
         player.y = 20;
 
         fishes = new Array<>();
+        bones = new Array<>();
 
         score = 0;
+        hp = 3;
         spawnTimer = 0;
     }
 
@@ -69,6 +75,19 @@ public class Main extends ApplicationAdapter {
         fish.y = viewport.getWorldHeight();
 
         fishes.add(fish);
+    }
+
+    private void spawnBone() {
+
+        Rectangle bone = new Rectangle();
+
+        bone.width = 40;
+        bone.height = 50;
+
+        bone.x = MathUtils.random(0, viewport.getWorldWidth() - bone.width);
+        bone.y = viewport.getWorldHeight();
+
+        bones.add(bone);
     }
 
     @Override
@@ -93,11 +112,12 @@ public class Main extends ApplicationAdapter {
         if (player.x < 0) player.x = 0;
         if (player.x > screenWidth - player.width) player.x = screenWidth - player.width;
 
-        // Spawn fish every second
+        // Spawn fish or bone every second
         spawnTimer += delta;
 
         if (spawnTimer >= 1f) {
-            spawnFish();
+            if (MathUtils.random() < 0.3f) spawnBone();
+            else spawnFish();
             spawnTimer = 0;
         }
 
@@ -120,6 +140,35 @@ public class Main extends ApplicationAdapter {
             else if (fish.y < -fish.height) {
                 fishes.removeIndex(i);
             }
+        }
+
+        // Update bones
+        for (int i = bones.size - 1; i >= 0; i--) {
+
+            Rectangle bone = bones.get(i);
+
+            bone.y -= 200 * delta;
+
+            // Collision: lose HP
+            if (bone.overlaps(player)) {
+
+                hp--;
+
+                bones.removeIndex(i);
+            }
+
+            // Remove if off screen
+            else if (bone.y < -bone.height) {
+                bones.removeIndex(i);
+            }
+        }
+
+        // Game over: restart
+        if (hp <= 0) {
+            hp = 3;
+            score = 0;
+            fishes.clear();
+            bones.clear();
         }
 
         viewport.apply();
@@ -149,7 +198,20 @@ public class Main extends ApplicationAdapter {
             );
         }
 
+        // Draw bones
+        for (Rectangle bone : bones) {
+
+            batch.draw(
+                boneTexture,
+                bone.x,
+                bone.y,
+                bone.width,
+                bone.height
+            );
+        }
+
         font.draw(batch, "Score: " + score, 20, screenHeight - 20);
+        font.draw(batch, "HP: " + hp, 20, screenHeight - 45);
 
         batch.end();
     }
@@ -160,6 +222,7 @@ public class Main extends ApplicationAdapter {
         batch.dispose();
         playerTexture.dispose();
         fishTexture.dispose();
+        boneTexture.dispose();
         background.dispose();
         font.dispose();
     }
