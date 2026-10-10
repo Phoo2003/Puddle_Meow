@@ -42,6 +42,18 @@ public class Main extends ApplicationAdapter {
     private boolean win;
     private boolean gameOver;
 
+    // Mystery box texture and objects
+    private Texture mysteryBoxTexture;
+    private Array<MysteryBox> mysteryBoxes;
+
+    // Mystery box spawn timer
+    private float mysteryBoxSpawnTimer = 0;
+    private static final float MYSTERY_BOX_SPAWN_INTERVAL = 10f;
+
+    // Power-up states
+    private boolean scoreBoostActive = false;
+    private float scoreBoostTimer = 0;
+
     @Override
     public void create() {
 
@@ -52,6 +64,9 @@ public class Main extends ApplicationAdapter {
         fishTexture = new Texture("fish.png");
         boneTexture = new Texture("fishbone.png");
         background = new Texture("ground.jpg");
+
+        mysteryBoxTexture = new Texture("Cat.png");
+        mysteryBoxes = new Array<>();
 
         font = new BitmapFont();
 
@@ -111,6 +126,22 @@ public class Main extends ApplicationAdapter {
         bones.add(new FishBone(boneTexture, x, y));
     }
 
+    // Create a method to spawn mystery boxes
+    private void spawnMysteryBox() {
+        float x = MathUtils.random(
+            0,
+            viewport.getWorldWidth() - 35
+        );
+
+        mysteryBoxes.add(
+            new MysteryBox(
+                mysteryBoxTexture,
+                x,
+                viewport.getWorldHeight()
+            )
+        );
+    }
+
     private void updateGame(float delta) {
 
         float screenWidth = viewport.getWorldWidth();
@@ -167,6 +198,35 @@ public class Main extends ApplicationAdapter {
             boneSpawnTimer = 0;
         }
 
+        // Spawn mystery boxes at regular intervals.
+        mysteryBoxSpawnTimer += delta;
+
+        if (mysteryBoxSpawnTimer >= MYSTERY_BOX_SPAWN_INTERVAL) {
+            spawnMysteryBox();
+            mysteryBoxSpawnTimer = 0;
+        }
+
+        // Update mystery boxes and remove boxes off-screen
+        for (int i = mysteryBoxes.size - 1; i >= 0; i--) {
+            MysteryBox box = mysteryBoxes.get(i);
+
+            box.update(delta);
+
+            if (box.getY() + box.getBounds().height < 0) {
+                mysteryBoxes.removeIndex(i);
+            }
+        }
+
+        // Score boost expire
+        if (scoreBoostActive) {
+            scoreBoostTimer -= delta;
+
+            if (scoreBoostTimer <= 0) {
+                scoreBoostActive = false;
+                scoreBoostTimer = 0;
+            }
+        }
+
         // Update fish and check collisions.
         for (int i = fishes.size - 1; i >= 0; i--) {
 
@@ -176,7 +236,12 @@ public class Main extends ApplicationAdapter {
 
             if (fish.getBounds().overlaps(player)) {
 
-                score += fish.getScoreValue();
+                // double score when get score boost
+                if (scoreBoostActive) {
+                    score += fish.getScoreValue() * 2;
+                } else {
+                    score += fish.getScoreValue();
+                }
 
                 fishes.removeIndex(i);
 
@@ -202,6 +267,39 @@ public class Main extends ApplicationAdapter {
             } else if (bone.getY() < -bone.getBounds().height) {
 
                 bones.removeIndex(i);
+            }
+        }
+
+        // Update mystery boxes and check collisions
+        for (int i = mysteryBoxes.size - 1; i >= 0; i--) {
+            MysteryBox box = mysteryBoxes.get(i);
+
+            box.update(delta);
+
+            if (box.getBounds().overlaps(player)) {
+                MysteryBox.Reward reward = box.getRandomReward();
+
+                switch (reward) {
+                    case EXTRA_HEART:
+                        if (hp < 3) {
+                            hp++;
+                        }
+                        break;
+
+                    case SCORE_BOOST:
+                        scoreBoostActive = true;
+                        scoreBoostTimer = 10f;
+                        break;
+
+                    case LIQUID_BOOST:
+                        // We will implement this in the next step.
+                        break;
+                }
+
+                mysteryBoxes.removeIndex(i);
+
+            } else if (box.getY() + box.getBounds().height < 0) {
+                mysteryBoxes.removeIndex(i);
             }
         }
 
@@ -265,9 +363,24 @@ public class Main extends ApplicationAdapter {
             bone.draw(batch);
         }
 
+        // Draw mystery boxes
+        for (MysteryBox box : mysteryBoxes) {
+            box.draw(batch);
+        }
+
         // Draw score and HP.
         font.draw(batch, "Score: " + score, 20, screenHeight - 20);
         font.draw(batch, "HP: " + hp, 20, screenHeight - 45);
+
+        // Display the remaining time of score boost
+        if (scoreBoostActive) {
+            font.draw(
+                batch,
+                "DOUBLE SCORE: " + (int) Math.ceil(scoreBoostTimer) + "s",
+                20,
+                screenHeight - 70
+            );
+        }
 
         // Display the ending message.
         if (win) {
@@ -290,6 +403,8 @@ public class Main extends ApplicationAdapter {
         fishTexture.dispose();
         boneTexture.dispose();
         background.dispose();
+
+        mysteryBoxTexture.dispose();
 
         font.dispose();
     }
