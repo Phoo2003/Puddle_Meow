@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
@@ -16,23 +15,32 @@ public class Main extends ApplicationAdapter {
 
     private SpriteBatch batch;
     private FitViewport viewport;
+
     private Texture playerTexture;
     private Texture fishTexture;
     private Texture boneTexture;
     private Texture background;
+
     private BitmapFont font;
 
-    private Rectangle player;
+    private com.badlogic.gdx.math.Rectangle player;
 
-    private Array<Rectangle> fishes;
-    private Array<Rectangle> bones;
+    private Array<Fish> fishes;
+    private Array<FishBone> bones;
 
-    private float spawnTimer;
+    private float fishSpawnTimer;
+    private float boneSpawnTimer;
+
+    private static final float FISH_SPAWN_INTERVAL = 2.0f;
+    private static final float BONE_SPAWN_INTERVAL = 4.0f;
 
     private int score;
     private int hp;
 
+    private static final int TARGET_SCORE = 100;
+
     private boolean win;
+    private boolean gameOver;
 
     @Override
     public void create() {
@@ -47,20 +55,27 @@ public class Main extends ApplicationAdapter {
 
         font = new BitmapFont();
 
-        player = new Rectangle();
+        player = new com.badlogic.gdx.math.Rectangle();
+
         player.width = 85;
         player.height = 100;
-        player.x = viewport.getWorldWidth() / 2f - player.width / 2f;
+
+        player.x = viewport.getWorldWidth() / 2f
+            - player.width / 2f;
+
         player.y = 20;
 
         fishes = new Array<>();
         bones = new Array<>();
 
+        fishSpawnTimer = 0;
+        boneSpawnTimer = 0;
+
         score = 0;
         hp = 3;
-        spawnTimer = 0;
 
         win = false;
+        gameOver = false;
     }
 
     @Override
@@ -70,40 +85,37 @@ public class Main extends ApplicationAdapter {
 
     private void spawnFish() {
 
-        Rectangle fish = new Rectangle();
+        float width = 40;
 
-        fish.width = 40;
-        fish.height = 30;
+        float x = MathUtils.random(
+            0,
+            viewport.getWorldWidth() - width
+        );
 
-        fish.x = MathUtils.random(0, viewport.getWorldWidth() - fish.width);
-        fish.y = viewport.getWorldHeight();
+        float y = viewport.getWorldHeight();
 
-        fishes.add(fish);
+        fishes.add(new Fish(fishTexture, x, y));
     }
 
     private void spawnBone() {
 
-        Rectangle bone = new Rectangle();
+        float width = 30;
 
-        bone.width = 30;
-        bone.height = 20;
+        float x = MathUtils.random(
+            0,
+            viewport.getWorldWidth() - width
+        );
 
-        bone.x = MathUtils.random(0, viewport.getWorldWidth() - bone.width);
-        bone.y = viewport.getWorldHeight();
+        float y = viewport.getWorldHeight();
 
-        bones.add(bone);
+        bones.add(new FishBone(boneTexture, x, y));
     }
 
-    @Override
-    public void render() {
+    private void updateGame(float delta) {
 
-        float delta = Gdx.graphics.getDeltaTime();
         float screenWidth = viewport.getWorldWidth();
-        float screenHeight = viewport.getWorldHeight();
 
-        ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
-
-        // Move player
+        // Move the cat.
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             player.x -= 300 * delta;
         }
@@ -112,76 +124,109 @@ public class Main extends ApplicationAdapter {
             player.x += 300 * delta;
         }
 
-        // Keep inside screen
-        if (player.x < 0) player.x = 0;
-        if (player.x > screenWidth - player.width) player.x = screenWidth - player.width;
+        // Keep the cat inside the screen.
+        player.x = MathUtils.clamp(
+            player.x,
+            0,
+            screenWidth - player.width
+        );
 
-        // Spawn fish or bone every second
-        spawnTimer += delta;
+        // Spawn fish at regular intervals.
+        fishSpawnTimer += delta;
 
-        if (spawnTimer >= 1f) {
-            if (MathUtils.random() < 0.3f) spawnBone();
-            else spawnFish();
-            spawnTimer = 0;
+        if (fishSpawnTimer >= FISH_SPAWN_INTERVAL) {
+            spawnFish();
+            fishSpawnTimer = 0;
         }
 
-        // Update fish
+        // Spawn bones at regular intervals.
+        boneSpawnTimer += delta;
+
+        if (boneSpawnTimer >= BONE_SPAWN_INTERVAL) {
+            spawnBone();
+            boneSpawnTimer = 0;
+        }
+
+        // Update fish and check collisions.
         for (int i = fishes.size - 1; i >= 0; i--) {
 
-            Rectangle fish = fishes.get(i);
+            Fish fish = fishes.get(i);
 
-            fish.y -= 200 * delta;
+            fish.update(delta);
 
-            // Collision
-            if (fish.overlaps(player)) {
+            if (fish.getBounds().overlaps(player)) {
 
-                score++;
+                score += fish.getScoreValue();
 
                 fishes.removeIndex(i);
-            }
 
-            // Remove if off screen
-            else if (fish.y < -fish.height) {
+            } else if (fish.getY() < -fish.getBounds().height) {
+
                 fishes.removeIndex(i);
             }
         }
 
-        // Update bones
+        // Update bones and check collisions.
         for (int i = bones.size - 1; i >= 0; i--) {
 
-            Rectangle bone = bones.get(i);
+            FishBone bone = bones.get(i);
 
-            bone.y -= 200 * delta;
+            bone.update(delta);
 
-            // Collision: lose HP
-            if (bone.overlaps(player)) {
+            if (bone.getBounds().overlaps(player)) {
 
-                hp--;
+                hp -= bone.getDamage();
 
                 bones.removeIndex(i);
-            }
 
-            // Remove if off screen
-            else if (bone.y < -bone.height) {
+            } else if (bone.getY() < -bone.getBounds().height) {
+
                 bones.removeIndex(i);
             }
         }
 
-        // Game over: restart
+        // Check losing condition first.
         if (hp <= 0) {
-            hp = 3;
-            score = 0;
-            fishes.clear();
-            bones.clear();
+            hp = 0;
+            gameOver = true;
+        }
+
+        // Check winning condition.
+        if (score >= TARGET_SCORE && !gameOver) {
+            win = true;
+        }
+    }
+
+    @Override
+    public void render() {
+
+        float delta = Gdx.graphics.getDeltaTime();
+
+        float screenWidth = viewport.getWorldWidth();
+        float screenHeight = viewport.getWorldHeight();
+
+        ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
+
+        // Stop updating the game after winning or losing.
+        if (!win && !gameOver) {
+            updateGame(delta);
         }
 
         viewport.apply();
         batch.setProjectionMatrix(viewport.getCamera().combined);
+
         batch.begin();
 
-        batch.draw(background, 0, 0, screenWidth, screenHeight);
+        // Draw background.
+        batch.draw(
+            background,
+            0,
+            0,
+            screenWidth,
+            screenHeight
+        );
 
-        // Draw player
+        // Draw cat.
         batch.draw(
             playerTexture,
             player.x,
@@ -190,65 +235,42 @@ public class Main extends ApplicationAdapter {
             player.height
         );
 
-        // Draw fish
-        for (Rectangle fish : fishes) {
-
-            batch.draw(
-                fishTexture,
-                fish.x,
-                fish.y,
-                fish.width,
-                fish.height
-            );
+        // Draw fish.
+        for (Fish fish : fishes) {
+            fish.draw(batch);
         }
 
-        // Draw bones
-        for (Rectangle bone : bones) {
-
-            batch.draw(
-                boneTexture,
-                bone.x,
-                bone.y,
-                bone.width,
-                bone.height
-            );
+        // Draw bones.
+        for (FishBone bone : bones) {
+            bone.draw(batch);
         }
 
+        // Draw score and HP.
         font.draw(batch, "Score: " + score, 20, screenHeight - 20);
         font.draw(batch, "HP: " + hp, 20, screenHeight - 45);
 
+        // Display the ending message.
         if (win) {
-
-            font.draw(
-                batch,
-                "LEVEL COMPLETE!",
-                320,
-                240
-            );
+            font.draw(batch, "LEVEL COMPLETE!", 320, 240);
         }
 
-        if (hp <= 0) {
-
-            font.draw(
-                batch,
-                "GAME OVER",
-                350,
-                200
-            );
+        if (gameOver) {
+            font.draw(batch, "GAME OVER", 350, 240);
         }
 
         batch.end();
-
     }
 
     @Override
     public void dispose() {
 
         batch.dispose();
+
         playerTexture.dispose();
         fishTexture.dispose();
         boneTexture.dispose();
         background.dispose();
+
         font.dispose();
     }
 }
