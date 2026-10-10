@@ -14,14 +14,22 @@ public class Cat {
     Texture liquidTexture;
     CatState state = CatState.SOLID;
     int hp = 3;
-    float speed = 5f;
+    float speed = 300f;
     float liquidTimer = 0;
 
     public Cat(Texture solidTexture, Texture liquidTexture) {
         this.solidTexture = solidTexture;
         this.liquidTexture = liquidTexture;
         sprite = new Sprite(solidTexture);
-        sprite.setSize(1, 1);
+        sprite.setSize(85, 100);
+        sprite.setY(20);
+    }
+
+    public void reset(float worldWidth) {
+        hp = 3;
+        liquidTimer = 0;
+        setState(CatState.SOLID);
+        sprite.setCenterX(worldWidth / 2);
     }
 
     public void update(float delta, float worldWidth) {
@@ -47,12 +55,31 @@ public class Cat {
         state = newState;
         if (state == CatState.LIQUID) {
             sprite.setRegion(liquidTexture);
-            sprite.setSize(1.8f, 0.55f);
+            sprite.setSize(150, 50);
         } else {
             sprite.setRegion(solidTexture);
-            sprite.setSize(1, 1);
+            sprite.setSize(85, 100);
         }
         sprite.setCenterX(centerX);
+        sprite.setY(20);
     }
 
+    public void becomeLiquid() {
+        liquidTimer = 5f;
+        setState(CatState.LIQUID);
+    }
+
+    public void takeDamage() {
+        if (state == CatState.SOLID) {
+            hp--;
+        }
+    }
+
+    public Rectangle getBounds() {
+        return sprite.getBoundingRectangle();
+    }
+
+    public void draw(SpriteBatch batch) {
+        sprite.draw(batch);
+    }
 }

@@ -2,11 +2,11 @@ package io.github.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
@@ -23,7 +23,8 @@ public class Main extends ApplicationAdapter {
 
     private BitmapFont font;
 
-    private com.badlogic.gdx.math.Rectangle player;
+    // Player (Swan's Cat class)
+    private Cat cat;
 
     private Array<Fish> fishes;
     private Array<FishBone> bones;
@@ -70,15 +71,9 @@ public class Main extends ApplicationAdapter {
 
         font = new BitmapFont();
 
-        player = new com.badlogic.gdx.math.Rectangle();
-
-        player.width = 85;
-        player.height = 100;
-
-        player.x = viewport.getWorldWidth() / 2f
-            - player.width / 2f;
-
-        player.y = 20;
+        // liquid form uses the same image for now (swap in a puddle image later)
+        cat = new Cat(playerTexture, playerTexture);
+        cat.reset(viewport.getWorldWidth());
 
         fishes = new Array<>();
         bones = new Array<>();
@@ -146,15 +141,6 @@ public class Main extends ApplicationAdapter {
 
         float screenWidth = viewport.getWorldWidth();
 
-        // move the cat
-        // Keyboard controls
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            player.x -= 300 * delta;
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            player.x += 300 * delta;
-        }
-
         // Touchscreen controls
         if (Gdx.input.isTouched()) {
             float touchX = Gdx.input.getX();
@@ -165,22 +151,13 @@ public class Main extends ApplicationAdapter {
             ).x;
 
             // Move the cat to the touched horizontal position
-            player.x = worldX - player.width / 2;
+            cat.sprite.setCenterX(worldX);
         }
 
-        // Keep the cat inside the screen
-        player.x = MathUtils.clamp(
-            player.x,
-            0,
-            viewport.getWorldWidth() - player.width
-        );
+        // Cat: keyboard movement, keep inside screen, liquid timer
+        cat.update(delta, screenWidth);
 
-        // Keep the cat inside the screen.
-        player.x = MathUtils.clamp(
-            player.x,
-            0,
-            screenWidth - player.width
-        );
+        Rectangle catBounds = cat.getBounds();
 
         // Spawn fish at regular intervals.
         fishSpawnTimer += delta;
@@ -234,7 +211,7 @@ public class Main extends ApplicationAdapter {
 
             fish.update(delta);
 
-            if (fish.getBounds().overlaps(player)) {
+            if (fish.getBounds().overlaps(catBounds)) {
 
                 // double score when get score boost
                 if (scoreBoostActive) {
@@ -258,7 +235,11 @@ public class Main extends ApplicationAdapter {
 
             bone.update(delta);
 
-            if (bone.getBounds().overlaps(player)) {
+            // Liquid cat is immune: bones pass through it
+            boolean hit = bone.getBounds().overlaps(catBounds)
+                && cat.state == CatState.SOLID;
+
+            if (hit) {
 
                 hp -= bone.getDamage();
 
@@ -276,7 +257,7 @@ public class Main extends ApplicationAdapter {
 
             box.update(delta);
 
-            if (box.getBounds().overlaps(player)) {
+            if (box.getBounds().overlaps(catBounds)) {
                 MysteryBox.Reward reward = box.getRandomReward();
 
                 switch (reward) {
@@ -292,7 +273,7 @@ public class Main extends ApplicationAdapter {
                         break;
 
                     case LIQUID_BOOST:
-                        // We will implement this in the next step.
+                        cat.becomeLiquid();
                         break;
                 }
 
@@ -345,13 +326,7 @@ public class Main extends ApplicationAdapter {
         );
 
         // Draw cat.
-        batch.draw(
-            playerTexture,
-            player.x,
-            player.y,
-            player.width,
-            player.height
-        );
+        cat.draw(batch);
 
         // Draw fish.
         for (Fish fish : fishes) {
@@ -379,6 +354,16 @@ public class Main extends ApplicationAdapter {
                 "DOUBLE SCORE: " + (int) Math.ceil(scoreBoostTimer) + "s",
                 20,
                 screenHeight - 70
+            );
+        }
+
+        // Display the remaining time of liquid boost
+        if (cat.state == CatState.LIQUID) {
+            font.draw(
+                batch,
+                "LIQUID: " + (int) Math.ceil(cat.liquidTimer) + "s",
+                20,
+                screenHeight - 95
             );
         }
 
