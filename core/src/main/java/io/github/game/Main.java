@@ -115,14 +115,34 @@ public class Main extends ApplicationAdapter {
 
         float screenWidth = viewport.getWorldWidth();
 
-        // Move the cat.
+        // move the cat
+        // Keyboard controls
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             player.x -= 300 * delta;
         }
-
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             player.x += 300 * delta;
         }
+
+        // Touchscreen controls
+        if (Gdx.input.isTouched()) {
+            float touchX = Gdx.input.getX();
+
+            // Convert screen coordinates to game world coordinates
+            float worldX = viewport.unproject(
+                new com.badlogic.gdx.math.Vector2(touchX, 0)
+            ).x;
+
+            // Move the cat to the touched horizontal position
+            player.x = worldX - player.width / 2;
+        }
+
+        // Keep the cat inside the screen
+        player.x = MathUtils.clamp(
+            player.x,
+            0,
+            viewport.getWorldWidth() - player.width
+        );
 
         // Keep the cat inside the screen.
         player.x = MathUtils.clamp(
