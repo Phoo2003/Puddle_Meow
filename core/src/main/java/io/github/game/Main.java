@@ -66,7 +66,7 @@ public class Main extends ApplicationAdapter {
         boneTexture = new Texture("fishbone.png");
         background = new Texture("ground.jpg");
 
-        mysteryBoxTexture = new Texture("Cat.png");
+        mysteryBoxTexture = new Texture("mysterybox.jpg");
         mysteryBoxes = new Array<>();
 
         font = new BitmapFont();
