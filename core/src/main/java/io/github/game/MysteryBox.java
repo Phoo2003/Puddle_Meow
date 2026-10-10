@@ -12,7 +12,7 @@ public class MysteryBox extends FallingItems {
     }
 
     public MysteryBox(Texture texture, float x, float y) {
-        super(texture, x, y, 35, 35, 150f);
+        super(texture, x, y, 50, 50, 100f);
     }
 
     public Reward getRandomReward() {

@@ -62,11 +62,11 @@ public class Main extends ApplicationAdapter {
         viewport = new FitViewport(800, 480);
 
         playerTexture = new Texture("Cat.png");
-        fishTexture = new Texture("fish.png");
-        boneTexture = new Texture("fishbone.png");
+        fishTexture = new Texture("pixel_fish.png");
+        boneTexture = new Texture("pixel_fishbone.png");
         background = new Texture("ground.jpg");
 
-        mysteryBoxTexture = new Texture("mysterybox.jpg");
+        mysteryBoxTexture = new Texture("mysterybox.png");
         mysteryBoxes = new Array<>();
 
         font = new BitmapFont();
