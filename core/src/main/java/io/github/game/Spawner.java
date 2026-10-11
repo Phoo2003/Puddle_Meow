@@ -3,17 +3,19 @@ package io.github.game;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 
-/** Owns the spawn timers and creates falling objects at the top of the screen. */
+/** Owns the spawn timers for one level and creates falling objects at the top of the screen. */
 public class Spawner {
 
     private final GameResources res;
+    private final LevelConfig level;
 
     private float fishTimer = 0;
     private float boneTimer = 0;
     private float boxTimer = 0;
 
-    public Spawner(GameResources res) {
+    public Spawner(GameResources res, LevelConfig level) {
         this.res = res;
+        this.level = level;
     }
 
     public void update(float delta,
@@ -22,13 +24,13 @@ public class Spawner {
                        Array<MysteryBox> boxes) {
 
         fishTimer += delta;
-        if (fishTimer >= GameConfig.FISH_SPAWN_INTERVAL) {
+        if (fishTimer >= level.fishInterval) {
             fishes.add(new Fish(res.fish, randomX(GameConfig.FISH_WIDTH), GameConfig.WORLD_HEIGHT));
             fishTimer = 0;
         }
 
         boneTimer += delta;
-        if (boneTimer >= GameConfig.BONE_SPAWN_INTERVAL) {
+        if (boneTimer >= level.boneInterval) {
             bones.add(new FishBone(res.bone, randomX(GameConfig.BONE_WIDTH), GameConfig.WORLD_HEIGHT));
             boneTimer = 0;
         }

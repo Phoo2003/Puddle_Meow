@@ -1,14 +1,16 @@
 package io.github.game;
 
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 
-/** Game state and rules: movement, spawning, collisions, win/lose. No rendering of UI here. */
+/** Game state and rules: levels, movement, spawning, collisions, win/lose. No UI drawing here. */
 public class GameWorld {
 
     private final GameResources res;
-    private final Spawner spawner;
+
+    private Spawner spawner;
+    private LevelConfig level;
 
     public final Cat cat;
     public final Array<Fish> fishes = new Array<>();
@@ -20,17 +22,49 @@ public class GameWorld {
     // Liquid boost is stored (max one) and activated by the player.
     public boolean liquidStored = false;
 
-    public int score = 0;
+    // Level progress
+    public int levelIndex = 0;
+    public boolean levelComplete = false;      // short pause between levels
+    private float levelCompleteTimer = 0;
+
+    public int score = 0;                      // score of the current level
     public boolean win = false;
     public boolean gameOver = false;
 
     public GameWorld(GameResources res) {
         this.res = res;
-        this.spawner = new Spawner(res);
 
         cat = new Cat(res.cat, res.liquidCat);
         cat.reset(GameConfig.WORLD_WIDTH);   // also resets cat HP to Cat.MAX_HP
+
+        startLevel(0);
     }
+
+    // ---- levels --------------------------------------------------------------
+
+    public int getLevelNumber() {
+        return levelIndex + 1;
+    }
+
+    public int getTargetScore() {
+        return level.targetScore;
+    }
+
+    /** Resets everything that belongs to a level. HP and the stored liquid boost carry over. */
+    private void startLevel(int index) {
+        levelIndex = index;
+        level = LevelConfig.get(index);
+        spawner = new Spawner(res, level);
+
+        fishes.clear();
+        bones.clear();
+        mysteryBoxes.clear();
+
+        score = 0;
+        levelComplete = false;
+    }
+
+    // ---- public API ------------------------------------------------------------
 
     public boolean isFinished() {
         return win || gameOver;
@@ -39,6 +73,20 @@ public class GameWorld {
     /** Touch control: move the cat to the touched world x. */
     public void moveCatTo(float worldX) {
         cat.sprite.setCenterX(worldX);
+    }
+
+    /** Start a brand new game from level 1 (after a win or a game over). */
+    public void restart() {
+        cat.reset(GameConfig.WORLD_WIDTH);   // HP back to full, cat back to start position
+        scoreBoost.reset();
+        notice.clear();
+        liquidStored = false;
+
+        win = false;
+        gameOver = false;
+        startLevel(0);
+
+        res.theme.play();   // music is stopped on game over
     }
 
     /** Player pressed the "use liquid boost" key. */
@@ -52,6 +100,16 @@ public class GameWorld {
 
     public void update(float delta) {
         notice.update(delta);
+
+        // Pause between levels: wait, then start the next one.
+        if (levelComplete) {
+            levelCompleteTimer -= delta;
+            if (levelCompleteTimer <= 0) {
+                startLevel(levelIndex + 1);
+            }
+            return;
+        }
+
         cat.update(delta, GameConfig.WORLD_WIDTH);
 
         Rectangle catBounds = buildCatHitbox();
@@ -61,8 +119,10 @@ public class GameWorld {
         spawner.update(delta, fishes, bones, mysteryBoxes);
         scoreBoost.update(delta);
 
-        updateFish(delta, catchBounds);
-        updateBones(delta, catBounds);
+        // Faster levels: fish and bones fall faster by scaling the time passed to them.
+        float fallDelta = delta * level.speedMultiplier;
+        updateFish(fallDelta, catchBounds);
+        updateBones(fallDelta, catBounds);
         updateMysteryBoxes(delta, catBounds);
 
         checkEndConditions();
@@ -169,7 +229,7 @@ public class GameWorld {
         }
     }
 
-    // ---- win / lose ---------------------------------------------------------
+    // ---- win / lose / next level -------------------------------------------
 
     private void checkEndConditions() {
         // Losing is checked first so it wins over a simultaneous win.
@@ -177,8 +237,16 @@ public class GameWorld {
             gameOver = true;
             res.theme.stop();
         }
-        if (score >= GameConfig.TARGET_SCORE && !gameOver) {
-            win = true;
+
+        if (!gameOver && score >= level.targetScore) {
+            boolean lastLevel = levelIndex == LevelConfig.count() - 1;
+
+            if (lastLevel) {
+                win = true;
+            } else {
+                levelComplete = true;
+                levelCompleteTimer = GameConfig.LEVEL_PAUSE;
+            }
         }
     }
 }

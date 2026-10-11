@@ -9,9 +9,7 @@ public final class GameConfig {
     public static final float WORLD_WIDTH = 800f;
     public static final float WORLD_HEIGHT = 480f;
 
-    // Spawn intervals (seconds)
-    public static final float FISH_SPAWN_INTERVAL = 2.0f;
-    public static final float BONE_SPAWN_INTERVAL = 4.0f;
+    // Mystery box interval (fish and bone intervals are per level, see LevelConfig)
     public static final float MYSTERY_BOX_SPAWN_INTERVAL = 10f;
 
     // Sprite widths used when choosing a random spawn x
@@ -20,7 +18,7 @@ public final class GameConfig {
     public static final float MYSTERY_BOX_WIDTH = 35f;
 
     // Rules
-    public static final int TARGET_SCORE = 100;
+    public static final float LEVEL_PAUSE = 2.5f;   // pause between levels (seconds)
     public static final float SCORE_BOOST_DURATION = 10f;
 
     // Cat hitbox ratios (relative to the sprite size)

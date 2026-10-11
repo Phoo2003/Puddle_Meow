@@ -37,6 +37,11 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void render() {
+        // R restarts the game after a win or a game over.
+        if (world.isFinished() && Gdx.input.isKeyJustPressed(Keys.R)) {
+            world.restart();
+        }
+
         if (!world.isFinished()) {
             handleInput();
             world.update(Gdx.graphics.getDeltaTime());
@@ -47,7 +52,7 @@ public class Main extends ApplicationAdapter {
         batch.setProjectionMatrix(viewport.getCamera().combined);
 
         batch.begin();
-        batch.draw(res.background, 0, 0, GameConfig.WORLD_WIDTH, GameConfig.WORLD_HEIGHT);
+        batch.draw(res.backgrounds[world.levelIndex], 0, 0, GameConfig.WORLD_WIDTH, GameConfig.WORLD_HEIGHT);
         world.draw(batch);
         hud.draw(batch, world);
         batch.end();

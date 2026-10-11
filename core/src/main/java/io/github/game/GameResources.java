@@ -15,9 +15,11 @@ public class GameResources implements Disposable {
     public final Texture fish = new Texture("pixel_fish.png");
     public final Texture bone = new Texture("pixel_fishbone.png");
     public final Texture mysteryBox = new Texture("mysterybox.png");
-    public final Texture background = new Texture("ground.jpg");
     public final Texture heartFull = new Texture("heart.png");
     public final Texture heartEmpty = new Texture("heart_empty.png");
+
+    /** One background per level, indexed by level index. */
+    public final Texture[] backgrounds;
 
     public final Sound boneSound =
         Gdx.audio.newSound(Gdx.files.internal("Cat eat the bone sound.wav"));
@@ -31,6 +33,18 @@ public class GameResources implements Disposable {
     public GameResources() {
         theme.setLooping(true);
         theme.setVolume(GameConfig.MUSIC_VOLUME);
+
+        backgrounds = new Texture[LevelConfig.count()];
+        for (int i = 0; i < backgrounds.length; i++) {
+            String file = LevelConfig.get(i).backgroundFile;
+
+            // If a level background is missing, fall back to the level 1 image instead of crashing.
+            if (!Gdx.files.internal(file).exists()) {
+                Gdx.app.log("GameResources", "Missing " + file + ", using level 1 background");
+                file = LevelConfig.get(0).backgroundFile;
+            }
+            backgrounds[i] = new Texture(file);
+        }
     }
 
     @Override
@@ -40,9 +54,10 @@ public class GameResources implements Disposable {
         fish.dispose();
         bone.dispose();
         mysteryBox.dispose();
-        background.dispose();
         heartFull.dispose();
         heartEmpty.dispose();
+
+        for (Texture t : backgrounds) t.dispose();
 
         boneSound.dispose();
         mysteryBoxSound.dispose();

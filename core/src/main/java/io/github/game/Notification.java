@@ -11,6 +11,10 @@ public class Notification {
         this.timer = seconds;
     }
 
+    public void clear() {
+        timer = 0;
+    }
+
     public void update(float delta) {
         if (timer > 0) {
             timer -= delta;

@@ -9,6 +9,10 @@ public class ScoreBoost {
         timer = seconds;
     }
 
+    public void reset() {
+        timer = 0;
+    }
+
     public void update(float delta) {
         if (timer > 0) {
             timer -= delta;
