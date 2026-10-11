@@ -20,7 +20,7 @@ public class Main extends ApplicationAdapter {
     private Texture fishTexture;
     private Texture boneTexture;
     private Texture background;
-
+    private Texture liquidCatTexture;
     private BitmapFont font;
 
     // Player (Swan's Cat class)
@@ -55,6 +55,12 @@ public class Main extends ApplicationAdapter {
     private boolean scoreBoostActive = false;
     private float scoreBoostTimer = 0;
 
+    private boolean liquidBoostActive = false;
+    private float liquidBoostTimer = 0f;
+
+    private static final float LIQUID_BOOST_DURATION = 5f;
+    private static final float LIQUID_CATCH_WIDTH = 150f;
+
     @Override
     public void create() {
 
@@ -69,10 +75,11 @@ public class Main extends ApplicationAdapter {
         mysteryBoxTexture = new Texture("mysterybox.png");
         mysteryBoxes = new Array<>();
 
+        liquidCatTexture = new Texture("liquidform.jpg");
+
         font = new BitmapFont();
 
-        // liquid form uses the same image for now (swap in a puddle image later)
-        cat = new Cat(playerTexture, playerTexture);
+        cat = new Cat(playerTexture, liquidCatTexture);
         cat.reset(viewport.getWorldWidth());
 
         fishes = new Array<>();
@@ -204,16 +211,36 @@ public class Main extends ApplicationAdapter {
             }
         }
 
+        // Set the fish-catching area.
+        Rectangle catchBounds = catBounds;
+
+        // Liquid cat can catch fish across a wider area.
+        if (cat.state == CatState.LIQUID) {
+            float catchWidth = 150f;
+
+            catchBounds = new Rectangle(
+                catBounds.x + catBounds.width / 2f - catchWidth / 2f,
+                catBounds.y,
+                catchWidth,
+                catBounds.height
+            );
+
+            // Keep the catching area inside the screen.
+            catchBounds.x = MathUtils.clamp(
+                catchBounds.x,
+                0,
+                viewport.getWorldWidth() - catchBounds.width
+            );
+        }
+
         // Update fish and check collisions.
         for (int i = fishes.size - 1; i >= 0; i--) {
-
             Fish fish = fishes.get(i);
-
             fish.update(delta);
 
-            if (fish.getBounds().overlaps(catBounds)) {
+            if (fish.getBounds().overlaps(catchBounds)) {
 
-                // double score when get score boost
+                // Double the score while score boost is active.
                 if (scoreBoostActive) {
                     score += fish.getScoreValue() * 2;
                 } else {
@@ -223,7 +250,6 @@ public class Main extends ApplicationAdapter {
                 fishes.removeIndex(i);
 
             } else if (fish.getY() < -fish.getBounds().height) {
-
                 fishes.removeIndex(i);
             }
         }

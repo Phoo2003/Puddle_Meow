@@ -51,17 +51,18 @@ public class Cat {
     }
 
     public void setState(CatState newState) {
-        float centerX = sprite.getX() + sprite.getWidth() / 2;
+        float centerX = sprite.getX() + sprite.getWidth() / 2f;
         state = newState;
+
         if (state == CatState.LIQUID) {
             sprite.setRegion(liquidTexture);
-            sprite.setSize(150, 50);
+            sprite.setSize(150f, 45f);
         } else {
             sprite.setRegion(solidTexture);
-            sprite.setSize(85, 100);
+            sprite.setSize(85f, 100f);
         }
+
         sprite.setCenterX(centerX);
-        sprite.setY(20);
     }
 
     public void becomeLiquid() {
