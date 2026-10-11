@@ -76,7 +76,7 @@ public class Main extends ApplicationAdapter {
         mysteryBoxTexture = new Texture("mysterybox.png");
         mysteryBoxes = new Array<>();
 
-        liquidCatTexture = new Texture("Liquidform.png");
+        liquidCatTexture = new Texture("liquidform.png");
 
         font = new BitmapFont();
 
@@ -174,8 +174,17 @@ public class Main extends ApplicationAdapter {
         // Cat: keyboard movement, keep inside screen, liquid timer
         cat.update(delta, screenWidth);
 
-        // The liquid cat sprite is wider, so its bounds are the wider catching area
-        Rectangle catBounds = cat.getBounds();
+        // Custom collision hitbox for the cat.
+        // Adjust these values to fit the cat's body.
+        Rectangle catBounds = new Rectangle(
+            cat.sprite.getX() + 15f,
+            cat.sprite.getY() + 10f,
+            cat.sprite.getWidth() - 30f,
+            cat.sprite.getHeight() - 20f
+        );
+
+        // Fish area: the liquid cat catches over its full wide sprite
+        Rectangle catchBounds = (cat.state == CatState.LIQUID) ? cat.getBounds() : catBounds;
 
         // Spawn fish at regular intervals.
         fishSpawnTimer += delta;
@@ -227,7 +236,7 @@ public class Main extends ApplicationAdapter {
             Fish fish = fishes.get(i);
             fish.update(delta);
 
-            if (fish.getBounds().overlaps(catBounds)) {
+            if (fish.getBounds().overlaps(catchBounds)) {
 
                 // Double the score while score boost is active.
                 if (scoreBoostActive) {
@@ -250,15 +259,18 @@ public class Main extends ApplicationAdapter {
 
             bone.update(delta);
 
-            // Liquid cat is immune: bones pass through it
-            boolean hit = bone.getBounds().overlaps(catBounds)
-                && cat.state == CatState.SOLID;
+            // Check whether the fishbone touches the cat's hitbox.
+            if (bone.getBounds().overlaps(catBounds)) {
 
-            if (hit) {
-
-                hp -= bone.getDamage();
                 boneSound.play();
 
+                // Solid cat takes damage.
+                if (cat.state == CatState.SOLID) {
+                    hp -= bone.getDamage();
+                }
+
+                // Remove the fishbone in both states.
+                // Liquid cat catches it without taking damage.
                 bones.removeIndex(i);
 
             } else if (bone.getY() < -bone.getBounds().height) {
