@@ -9,11 +9,13 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 
 public class Cat {
+    public static final int MAX_HP = 3;
+
     Sprite sprite;
     Texture solidTexture;
     Texture liquidTexture;
     CatState state = CatState.SOLID;
-    int hp = 3;
+    int hp = MAX_HP;
     float speed = 300f;
     float liquidTimer = 0;
 
@@ -26,7 +28,7 @@ public class Cat {
     }
 
     public void reset(float worldWidth) {
-        hp = 3;
+        hp = MAX_HP;
         liquidTimer = 0;
         setState(CatState.SOLID);
         sprite.setCenterX(worldWidth / 2);
@@ -70,10 +72,24 @@ public class Cat {
         setState(CatState.LIQUID);
     }
 
-    public void takeDamage() {
+    /** Lose HP (liquid cat is immune to bones). */
+    public void takeDamage(int amount) {
         if (state == CatState.SOLID) {
-            hp--;
+            hp = Math.max(0, hp - amount);
         }
+    }
+
+    public void takeDamage() {
+        takeDamage(1);
+    }
+
+    /** Gain HP, never above MAX_HP. */
+    public void heal(int amount) {
+        hp = Math.min(MAX_HP, hp + amount);
+    }
+
+    public int getHp() {
+        return hp;
     }
 
     public Rectangle getBounds() {
