@@ -2,6 +2,8 @@ package io.github.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -22,6 +24,11 @@ public class Main extends ApplicationAdapter {
     private Texture background;
     private Texture liquidCatTexture;
     private BitmapFont font;
+
+    // Audio
+    private Sound boneSound;
+    private Sound mysteryBoxSound;
+    private Music themeMusic;
 
     // Player (Swan's Cat class)
     private Cat cat;
@@ -55,8 +62,6 @@ public class Main extends ApplicationAdapter {
     private boolean scoreBoostActive = false;
     private float scoreBoostTimer = 0;
 
-    private static final float LIQUID_BOOST_DURATION = 5f;
-
     @Override
     public void create() {
 
@@ -71,9 +76,18 @@ public class Main extends ApplicationAdapter {
         mysteryBoxTexture = new Texture("mysterybox.png");
         mysteryBoxes = new Array<>();
 
-        liquidCatTexture = new Texture("liquidform.png");
+        liquidCatTexture = new Texture("Liquidform.png");
 
         font = new BitmapFont();
+
+        // Audio
+        boneSound = Gdx.audio.newSound(Gdx.files.internal("Cat eat the bone sound.wav"));
+        mysteryBoxSound = Gdx.audio.newSound(Gdx.files.internal("Mysterybox sound.wav"));
+
+        themeMusic = Gdx.audio.newMusic(Gdx.files.internal("Theme music.mp3"));
+        themeMusic.setLooping(true);
+        themeMusic.setVolume(0.5f);
+        themeMusic.play();
 
         cat = new Cat(playerTexture, liquidCatTexture);
         cat.reset(viewport.getWorldWidth());
@@ -160,14 +174,8 @@ public class Main extends ApplicationAdapter {
         // Cat: keyboard movement, keep inside screen, liquid timer
         cat.update(delta, screenWidth);
 
-        // Custom collision hitbox for the cat.
-        // Adjust these values to fit the cat's body.
-        Rectangle catBounds = new Rectangle(
-            cat.sprite.getX() + 15f,
-            cat.sprite.getY() + 10f,
-            cat.sprite.getWidth() - 30f,
-            cat.sprite.getHeight() - 20f
-        );
+        // The liquid cat sprite is wider, so its bounds are the wider catching area
+        Rectangle catBounds = cat.getBounds();
 
         // Spawn fish at regular intervals.
         fishSpawnTimer += delta;
@@ -214,34 +222,12 @@ public class Main extends ApplicationAdapter {
             }
         }
 
-        // Set the fish-catching area.
-        Rectangle catchBounds = catBounds;
-
-        // Liquid cat can catch fish across a wider area.
-        if (cat.state == CatState.LIQUID) {
-            float catchWidth = 150f;
-
-            catchBounds = new Rectangle(
-                catBounds.x + catBounds.width / 2f - catchWidth / 2f,
-                catBounds.y,
-                catchWidth,
-                catBounds.height
-            );
-
-            // Keep the catching area inside the screen.
-            catchBounds.x = MathUtils.clamp(
-                catchBounds.x,
-                0,
-                viewport.getWorldWidth() - catchBounds.width
-            );
-        }
-
         // Update fish and check collisions.
         for (int i = fishes.size - 1; i >= 0; i--) {
             Fish fish = fishes.get(i);
             fish.update(delta);
 
-            if (fish.getBounds().overlaps(catchBounds)) {
+            if (fish.getBounds().overlaps(catBounds)) {
 
                 // Double the score while score boost is active.
                 if (scoreBoostActive) {
@@ -259,22 +245,24 @@ public class Main extends ApplicationAdapter {
 
         // Update bones and check collisions.
         for (int i = bones.size - 1; i >= 0; i--) {
+
             FishBone bone = bones.get(i);
+
             bone.update(delta);
 
-            // Check whether the fishbone touches the cat's hitbox.
-            if (bone.getBounds().overlaps(catBounds)) {
+            // Liquid cat is immune: bones pass through it
+            boolean hit = bone.getBounds().overlaps(catBounds)
+                && cat.state == CatState.SOLID;
 
-                // Solid cat takes damage.
-                if (cat.state == CatState.SOLID) {
-                    hp -= bone.getDamage();
-                }
+            if (hit) {
 
-                // Remove the fishbone in both states.
-                // Liquid cat catches it without taking damage.
+                hp -= bone.getDamage();
+                boneSound.play();
+
                 bones.removeIndex(i);
 
             } else if (bone.getY() < -bone.getBounds().height) {
+
                 bones.removeIndex(i);
             }
         }
@@ -286,6 +274,8 @@ public class Main extends ApplicationAdapter {
             box.update(delta);
 
             if (box.getBounds().overlaps(catBounds)) {
+                mysteryBoxSound.play();
+
                 MysteryBox.Reward reward = box.getRandomReward();
 
                 switch (reward) {
@@ -316,6 +306,7 @@ public class Main extends ApplicationAdapter {
         if (hp <= 0) {
             hp = 0;
             gameOver = true;
+            themeMusic.stop();
         }
 
         // Check winning condition.
@@ -416,8 +407,13 @@ public class Main extends ApplicationAdapter {
         fishTexture.dispose();
         boneTexture.dispose();
         background.dispose();
+        liquidCatTexture.dispose();
 
         mysteryBoxTexture.dispose();
+
+        boneSound.dispose();
+        mysteryBoxSound.dispose();
+        themeMusic.dispose();
 
         font.dispose();
     }
