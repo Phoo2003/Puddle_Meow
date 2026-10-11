@@ -25,12 +25,19 @@ public class Main extends ApplicationAdapter {
     private Texture liquidCatTexture;
     private BitmapFont font;
 
+    // Heart icons (HUD)
+    private Texture heartFullTexture;
+    private Texture heartEmptyTexture;
+
+    private static final float HEART_SIZE = 32f;
+    private static final float HEART_GAP = 6f;
+
     // Audio
     private Sound boneSound;
     private Sound mysteryBoxSound;
     private Music themeMusic;
 
-    // Player (Swan's Cat class)
+    // Player (Swan's Cat class) - the cat owns the HP
     private Cat cat;
 
     private Array<Fish> fishes;
@@ -43,7 +50,6 @@ public class Main extends ApplicationAdapter {
     private static final float BONE_SPAWN_INTERVAL = 4.0f;
 
     private int score;
-    private int hp;
 
     private static final int TARGET_SCORE = 100;
 
@@ -76,9 +82,13 @@ public class Main extends ApplicationAdapter {
         mysteryBoxTexture = new Texture("mysterybox.png");
         mysteryBoxes = new Array<>();
 
-        liquidCatTexture = new Texture("liquidform.png");
+        liquidCatTexture = new Texture("Liquidform.png");
 
         font = new BitmapFont();
+
+        // Heart icons
+        heartFullTexture = new Texture("heart.png");
+        heartEmptyTexture = new Texture("heart_empty.png");
 
         // Audio
         boneSound = Gdx.audio.newSound(Gdx.files.internal("Cat eat the bone sound.wav"));
@@ -90,7 +100,7 @@ public class Main extends ApplicationAdapter {
         themeMusic.play();
 
         cat = new Cat(playerTexture, liquidCatTexture);
-        cat.reset(viewport.getWorldWidth());
+        cat.reset(viewport.getWorldWidth());   // also resets cat HP to Cat.MAX_HP
 
         fishes = new Array<>();
         bones = new Array<>();
@@ -99,7 +109,6 @@ public class Main extends ApplicationAdapter {
         boneSpawnTimer = 0;
 
         score = 0;
-        hp = 3;
 
         win = false;
         gameOver = false;
@@ -266,7 +275,7 @@ public class Main extends ApplicationAdapter {
 
                 // Solid cat takes damage.
                 if (cat.state == CatState.SOLID) {
-                    hp -= bone.getDamage();
+                    cat.takeDamage(bone.getDamage());
                 }
 
                 // Remove the fishbone in both states.
@@ -292,9 +301,7 @@ public class Main extends ApplicationAdapter {
 
                 switch (reward) {
                     case EXTRA_HEART:
-                        if (hp < 3) {
-                            hp++;
-                        }
+                        cat.heal(1);
                         break;
 
                     case SCORE_BOOST:
@@ -315,8 +322,7 @@ public class Main extends ApplicationAdapter {
         }
 
         // Check losing condition first.
-        if (hp <= 0) {
-            hp = 0;
+        if (cat.getHp() <= 0) {
             gameOver = true;
             themeMusic.stop();
         }
@@ -324,6 +330,14 @@ public class Main extends ApplicationAdapter {
         // Check winning condition.
         if (score >= TARGET_SCORE && !gameOver) {
             win = true;
+        }
+    }
+
+    // Draw one heart icon per HP slot: full = HP left, empty = HP lost.
+    private void drawHearts(float x, float y) {
+        for (int i = 0; i < Cat.MAX_HP; i++) {
+            Texture t = (i < cat.getHp()) ? heartFullTexture : heartEmptyTexture;
+            batch.draw(t, x + i * (HEART_SIZE + HEART_GAP), y, HEART_SIZE, HEART_SIZE);
         }
     }
 
@@ -374,9 +388,9 @@ public class Main extends ApplicationAdapter {
             box.draw(batch);
         }
 
-        // Draw score and HP.
+        // Draw score, then hearts under it (replaces the "HP: x" text).
         font.draw(batch, "Score: " + score, 20, screenHeight - 20);
-        font.draw(batch, "HP: " + hp, 20, screenHeight - 45);
+        drawHearts(20, screenHeight - 50 - HEART_SIZE);
 
         // Display the remaining time of score boost
         if (scoreBoostActive) {
@@ -384,7 +398,7 @@ public class Main extends ApplicationAdapter {
                 batch,
                 "DOUBLE SCORE: " + (int) Math.ceil(scoreBoostTimer) + "s",
                 20,
-                screenHeight - 70
+                screenHeight - 100
             );
         }
 
@@ -394,7 +408,7 @@ public class Main extends ApplicationAdapter {
                 batch,
                 "LIQUID: " + (int) Math.ceil(cat.liquidTimer) + "s",
                 20,
-                screenHeight - 95
+                screenHeight - 125
             );
         }
 
@@ -420,6 +434,9 @@ public class Main extends ApplicationAdapter {
         boneTexture.dispose();
         background.dispose();
         liquidCatTexture.dispose();
+
+        heartFullTexture.dispose();
+        heartEmptyTexture.dispose();
 
         mysteryBoxTexture.dispose();
 
