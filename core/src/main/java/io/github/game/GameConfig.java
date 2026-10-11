@@ -30,6 +30,8 @@ public final class GameConfig {
     public static final float LIQUID_HITBOX_H = 0.75f;
 
     // HUD
+    public static final float NOTICE_DURATION = 2f;
+    public static final float STATUS_LINE_HEIGHT = 25f;
     public static final float HEART_SIZE = 32f;
     public static final float HEART_GAP = 6f;
     public static final float MUSIC_VOLUME = 0.5f;

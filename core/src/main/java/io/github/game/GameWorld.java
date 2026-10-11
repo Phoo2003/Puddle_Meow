@@ -15,6 +15,10 @@ public class GameWorld {
     public final Array<FishBone> bones = new Array<>();
     public final Array<MysteryBox> mysteryBoxes = new Array<>();
     public final ScoreBoost scoreBoost = new ScoreBoost();
+    public final Notification notice = new Notification();
+
+    // Liquid boost is stored (max one) and activated by the player.
+    public boolean liquidStored = false;
 
     public int score = 0;
     public boolean win = false;
@@ -37,7 +41,17 @@ public class GameWorld {
         cat.sprite.setCenterX(worldX);
     }
 
+    /** Player pressed the "use liquid boost" key. */
+    public void useStoredLiquid() {
+        // Do nothing if nothing is stored or the cat is already liquid.
+        if (liquidStored && cat.state == CatState.SOLID) {
+            cat.becomeLiquid();
+            liquidStored = false;
+        }
+    }
+
     public void update(float delta) {
+        notice.update(delta);
         cat.update(delta, GameConfig.WORLD_WIDTH);
 
         Rectangle catBounds = buildCatHitbox();
@@ -131,14 +145,26 @@ public class GameWorld {
 
     private void applyReward(MysteryBox.Reward reward) {
         switch (reward) {
-            case EXTRA_HEART:
+            case EXTRA_HEART: {
+                int before = cat.getHp();
                 cat.heal(1);
+                notice.show(
+                    cat.getHp() > before ? "EXTRA HEART! +1 HP" : "HEARTS ALREADY FULL",
+                    GameConfig.NOTICE_DURATION
+                );
                 break;
+            }
             case SCORE_BOOST:
+                // Used immediately.
                 scoreBoost.activate(GameConfig.SCORE_BOOST_DURATION);
                 break;
             case LIQUID_BOOST:
-                cat.becomeLiquid();
+                // Stored, not used immediately. Only one can be kept.
+                if (liquidStored) {
+                    notice.show("LIQUID BOOST ALREADY STORED", GameConfig.NOTICE_DURATION);
+                } else {
+                    liquidStored = true;
+                }
                 break;
         }
     }

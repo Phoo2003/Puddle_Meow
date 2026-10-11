@@ -18,19 +18,37 @@ public class Hud {
         res.font.draw(batch, "Score: " + world.score, 20, top - 20);
         drawHearts(batch, world.cat, 20, top - 50 - GameConfig.HEART_SIZE);
 
-        if (world.scoreBoost.isActive()) {
-            res.font.draw(batch, "DOUBLE SCORE: " + world.scoreBoost.secondsLeft() + "s", 20, top - 100);
-        }
-
-        if (world.cat.state == CatState.LIQUID) {
-            res.font.draw(batch, "LIQUID: " + (int) Math.ceil(world.cat.liquidTimer) + "s", 20, top - 125);
-        }
+        drawStatusLines(batch, world, top - 100);
 
         if (world.win) {
             res.font.draw(batch, "LEVEL COMPLETE!", 320, 240);
         }
         if (world.gameOver) {
             res.font.draw(batch, "GAME OVER", 350, 240);
+        }
+    }
+
+    /** All boost / pick-up messages share one area and stack from top to bottom. */
+    private void drawStatusLines(SpriteBatch batch, GameWorld world, float startY) {
+        float y = startY;
+
+        if (world.scoreBoost.isActive()) {
+            res.font.draw(batch, "DOUBLE SCORE: " + world.scoreBoost.secondsLeft() + "s", 20, y);
+            y -= GameConfig.STATUS_LINE_HEIGHT;
+        }
+
+        if (world.cat.state == CatState.LIQUID) {
+            res.font.draw(batch, "LIQUID CAT: " + (int) Math.ceil(world.cat.liquidTimer) + "s", 20, y);
+            y -= GameConfig.STATUS_LINE_HEIGHT;
+        }
+
+        if (world.liquidStored) {
+            res.font.draw(batch, "LIQUID CAT IS READY: press SPACE", 20, y);
+            y -= GameConfig.STATUS_LINE_HEIGHT;
+        }
+
+        if (world.notice.isVisible()) {
+            res.font.draw(batch, world.notice.getText(), 20, y);
         }
     }
 

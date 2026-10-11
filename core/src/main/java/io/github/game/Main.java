@@ -2,6 +2,7 @@ package io.github.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -37,7 +38,7 @@ public class Main extends ApplicationAdapter {
     @Override
     public void render() {
         if (!world.isFinished()) {
-            handleTouch();
+            handleInput();
             world.update(Gdx.graphics.getDeltaTime());
         }
 
@@ -52,8 +53,13 @@ public class Main extends ApplicationAdapter {
         batch.end();
     }
 
-    /** Convert the touch position to world coordinates and move the cat there. */
-    private void handleTouch() {
+    /** Space uses the stored liquid boost; touch moves the cat. */
+    private void handleInput() {
+        if (Gdx.input.isKeyJustPressed(Keys.SPACE)) {
+            world.useStoredLiquid();
+        }
+
+        // Convert the touch position to world coordinates and move the cat there.
         if (Gdx.input.isTouched()) {
             float worldX = viewport.unproject(new Vector2(Gdx.input.getX(), 0)).x;
             world.moveCatTo(worldX);
