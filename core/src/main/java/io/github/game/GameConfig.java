@@ -10,7 +10,7 @@ public final class GameConfig {
     public static final float WORLD_HEIGHT = 480f;
 
     // Mystery box interval (fish and bone intervals are per level, see LevelConfig)
-    public static final float MYSTERY_BOX_SPAWN_INTERVAL = 10f;
+    public static final float MYSTERY_BOX_SPAWN_INTERVAL = 8f;
 
     // Sprite widths used when choosing a random spawn x
     public static final float FISH_WIDTH = 40f;

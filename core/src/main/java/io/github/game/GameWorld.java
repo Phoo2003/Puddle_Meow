@@ -1,5 +1,6 @@
 package io.github.game;
 
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
@@ -111,6 +112,7 @@ public class GameWorld {
         }
 
         cat.update(delta, GameConfig.WORLD_WIDTH);
+        updateCatLook();
 
         Rectangle catBounds = buildCatHitbox();
         // The liquid cat catches fish over its full wide sprite.
@@ -133,6 +135,27 @@ public class GameWorld {
         for (Fish fish : fishes) fish.draw(batch);
         for (FishBone bone : bones) bone.draw(batch);
         for (MysteryBox box : mysteryBoxes) box.draw(batch);
+    }
+
+    // ---- cat expression --------------------------------------------------------
+
+    /** Solid cat: full HP = normal, 1 HP = exhausted, in between = tired. Liquid form is left alone. */
+    private void updateCatLook() {
+        if (cat.state != CatState.SOLID) return;
+
+        int hp = cat.getHp();
+        Texture look;
+        if (hp >= Cat.MAX_HP) {
+            look = res.cat;
+        } else if (hp <= 1) {
+            look = res.catExhausted;
+        } else {
+            look = res.catTired;
+        }
+
+        if (cat.sprite.getTexture() != look) {
+            cat.sprite.setTexture(look);
+        }
     }
 
     // ---- hitbox ------------------------------------------------------------
@@ -175,10 +198,10 @@ public class GameWorld {
             bone.update(delta);
 
             if (bone.getBounds().overlaps(catBounds)) {
-                res.boneSound.play();
-
-                // Only the solid cat takes damage; the liquid cat just catches it.
+                // Only the solid cat takes damage (and hears the hit sound);
+                // the liquid cat is immune and just absorbs the bone silently.
                 if (cat.state == CatState.SOLID) {
+                    res.boneSound.play();
                     cat.takeDamage(bone.getDamage());
                 }
                 bones.removeIndex(i);

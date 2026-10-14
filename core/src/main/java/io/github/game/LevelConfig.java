@@ -22,9 +22,9 @@ public final class LevelConfig {
 
     private static final LevelConfig[] LEVELS = {
         //                  name      target fish  bone  speed  background
-        new LevelConfig("Easy",   50, 0.7f, 1.2f, 1.25f, "ground.jpg"),
-        new LevelConfig("Medium", 75, 0.5f, 1f, 1.50f, "blue night.jpg"),
-        new LevelConfig("Hard",   100, 0.3f, 0.8f, 2.00f, "Space.jpg"),
+        new LevelConfig("Easy",   100, 0.7f, 1.2f, 1.25f, "ground.jpg"),
+        new LevelConfig("Medium", 100, 0.5f, 1f, 1.50f, "blue night.jpg"),
+        new LevelConfig("Hard",   150, 0.3f, 0.8f, 2.00f, "Space.jpg"),
     };
 
     public static int count() {
