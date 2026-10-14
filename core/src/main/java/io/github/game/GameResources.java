@@ -26,6 +26,8 @@ public class GameResources implements Disposable {
 
     public final Sound boneSound =
         Gdx.audio.newSound(Gdx.files.internal("Cat eat the bone sound.wav"));
+    public final Sound fishSound =
+        Gdx.audio.newSound(Gdx.files.internal("Fish catch blip.wav"));
     public final Sound mysteryBoxSound =
         Gdx.audio.newSound(Gdx.files.internal("Mysterybox sound.wav"));
     public final Music theme =
@@ -69,6 +71,7 @@ public class GameResources implements Disposable {
         liquidCat.dispose();
         fish.dispose();
         bone.dispose();
+        fishSound.dispose();
         mysteryBox.dispose();
         heartFull.dispose();
         heartEmpty.dispose();
