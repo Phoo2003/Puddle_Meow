@@ -10,7 +10,7 @@ public final class GameConfig {
     public static final float WORLD_HEIGHT = 480f;
 
     // Mystery box interval (fish and bone intervals are per level, see LevelConfig)
-    public static final float MYSTERY_BOX_SPAWN_INTERVAL = 8f;
+    public static final float MYSTERY_BOX_SPAWN_INTERVAL = 7f;
 
     // Sprite widths used when choosing a random spawn x
     public static final float FISH_WIDTH = 40f;
@@ -18,8 +18,8 @@ public final class GameConfig {
     public static final float MYSTERY_BOX_WIDTH = 35f;
 
     // Rules
-    public static final float LEVEL_PAUSE = 2.5f;   // pause between levels (seconds)
-    public static final float SCORE_BOOST_DURATION = 10f;
+    public static final float LEVEL_PAUSE = 3f;   // pause between levels (seconds)
+    public static final float SCORE_BOOST_DURATION = 5f;
 
     // Cat hitbox ratios (relative to the sprite size)
     public static final float SOLID_HITBOX_W = 0.40f;
@@ -29,6 +29,7 @@ public final class GameConfig {
 
     // HUD
     public static final float NOTICE_DURATION = 2f;
+    public static final float SMOKY_DURATION = 3f;   // how long the bomb keeps the cat smoky
     public static final float STATUS_LINE_HEIGHT = 25f;
     public static final float HEART_SIZE = 32f;
     public static final float HEART_GAP = 6f;

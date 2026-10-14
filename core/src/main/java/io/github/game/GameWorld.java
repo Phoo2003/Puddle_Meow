@@ -2,6 +2,7 @@ package io.github.game;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 
@@ -22,6 +23,18 @@ public class GameWorld {
 
     // Liquid boost is stored (max one) and activated by the player.
     public boolean liquidStored = false;
+
+    // Bomb reward: the cat looks smoky while this timer runs (no damage, just embarrassment).
+    private float smokyTimer = 0;
+
+    private static final String[] BOMB_MESSAGES = {
+        "BOOM! Surprise, it was a bomb!",
+        "Cat.exe has crashed. Smoke detected.",
+        "Smells like burnt fur...",
+        "You are now 100% smoky flavored!",
+        "Free sauna! Smoke included.",
+        "Meow-ch! That box was not a gift."
+    };
 
     // Level progress
     public int levelIndex = 0;
@@ -82,6 +95,7 @@ public class GameWorld {
         scoreBoost.reset();
         notice.clear();
         liquidStored = false;
+        smokyTimer = 0;
 
         win = false;
         gameOver = false;
@@ -110,6 +124,8 @@ public class GameWorld {
             }
             return;
         }
+
+        if (smokyTimer > 0) smokyTimer -= delta;
 
         cat.update(delta, GameConfig.WORLD_WIDTH);
         updateCatLook();
@@ -145,7 +161,9 @@ public class GameWorld {
 
         int hp = cat.getHp();
         Texture look;
-        if (hp >= Cat.MAX_HP) {
+        if (smokyTimer > 0) {
+            look = res.catSmoky;
+        } else if (hp >= Cat.MAX_HP) {
             look = res.cat;
         } else if (hp <= 1) {
             look = res.catExhausted;
@@ -248,6 +266,14 @@ public class GameWorld {
                 } else {
                     liquidStored = true;
                 }
+                break;
+            case BOMB:
+                // Used immediately: smoky cat for a few seconds plus a funny message.
+                smokyTimer = GameConfig.SMOKY_DURATION;
+                notice.show(
+                    BOMB_MESSAGES[MathUtils.random(BOMB_MESSAGES.length - 1)],
+                    GameConfig.SMOKY_DURATION
+                );
                 break;
         }
     }
