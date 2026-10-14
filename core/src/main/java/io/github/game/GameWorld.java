@@ -202,7 +202,7 @@ public class GameWorld {
             fish.update(delta);
 
             if (fish.getBounds().overlaps(catchBounds)) {
-                fishSound.play();
+                res.fishSound.play(0.1f);
                 score += scoreBoost.apply(fish.getScoreValue());
                 fishes.removeIndex(i);
             } else if (fish.getY() < -fish.getBounds().height) {
