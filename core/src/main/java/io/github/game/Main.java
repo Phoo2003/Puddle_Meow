@@ -18,6 +18,8 @@ public class Main extends ApplicationAdapter {
     private GameWorld world;
     private Hud hud;
 
+    private boolean started = false;   // false = start screen is showing
+
     @Override
     public void create() {
         batch = new SpriteBatch();
@@ -27,7 +29,6 @@ public class Main extends ApplicationAdapter {
         world = new GameWorld(res);
         hud = new Hud(res);
 
-        res.theme.play();
     }
 
     @Override
@@ -38,13 +39,24 @@ public class Main extends ApplicationAdapter {
     @Override
     public void render() {
         // R restarts the game after a win or a game over.
-        if (world.isFinished() && Gdx.input.isKeyJustPressed(Keys.R)) {
-            world.restart();
-        }
+        if (!started) {
+            // Start screen: SPACE, ENTER or a tap begins the game.
+            if (Gdx.input.isKeyJustPressed(Keys.SPACE)
+                || Gdx.input.isKeyJustPressed(Keys.ENTER)
+                || Gdx.input.justTouched()) {
+                started = true;
+                res.theme.play();
+            }
+        } else {
+            // R restarts the game after a win or a game over.
+            if (world.isFinished() && Gdx.input.isKeyJustPressed(Keys.R)) {
+                world.restart();
+            }
 
-        if (!world.isFinished()) {
-            handleInput();
-            world.update(Gdx.graphics.getDeltaTime());
+            if (!world.isFinished()) {
+                handleInput();
+                world.update(Gdx.graphics.getDeltaTime());
+            }
         }
 
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
@@ -53,8 +65,12 @@ public class Main extends ApplicationAdapter {
 
         batch.begin();
         batch.draw(res.backgrounds[world.levelIndex], 0, 0, GameConfig.WORLD_WIDTH, GameConfig.WORLD_HEIGHT);
-        world.draw(batch);
-        hud.draw(batch, world);
+        if (started) {
+            world.draw(batch);
+            hud.draw(batch, world);
+        } else {
+            hud.drawStartScreen(batch);
+        }
         batch.end();
     }
 
